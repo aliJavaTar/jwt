@@ -1,0 +1,17 @@
+package vira.fanavaran.taabin.jwtimpl;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
+
+@RunWith(SpringRunner.class)
+@SpringBootTest
+public class SpringSecurityJwtExampleApplicationTests {
+
+    @Test
+    public void contextLoads() {
+        // Just check if Spring context is created
+    }
+}
+
