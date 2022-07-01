@@ -1,5 +1,6 @@
 package vira.fanavaran.taabin.jwtimpl.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -9,15 +10,18 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import vira.fanavaran.taabin.jwtimpl.UserADto;
 import vira.fanavaran.taabin.jwtimpl.constants.SecurityConstants;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
@@ -26,22 +30,44 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
     public JwtAuthenticationFilter(AuthenticationManager authenticationManager) {
         this.authenticationManager = authenticationManager;
-           /////////////
+        /////////////
         setFilterProcessesUrl(SecurityConstants.AUTH_LOGIN_URL);
     }
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) {
-        String username = request.getParameter("username");
-        String password = request.getParameter("password");
-        Authentication authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
+        Authentication authenticationToken = null;
+        boolean isPost = "POST".equals(request.getMethod());
+        if (isPost) {
+//            User userFind =(User)request.getAttribute("user");
+            try {
+                BufferedReader reader = request.getReader();
+                String text = reader.readLine();
+                String json = "";
+                while (true) {
+                    json = reader.readLine();
+                    if (json==null)
+                        break;
+                    else text+=json;
+                }
+                ObjectMapper mapper = new ObjectMapper();
+                UserADto userADto = mapper.readValue(text, UserADto.class);
+                 authenticationToken = new UsernamePasswordAuthenticationToken(userADto.username, userADto.password);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+//            String username = request.getParameter("username");
+//            String password = request.getParameter("password");
+//            Authentication authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
 
-        return authenticationManager.authenticate(authenticationToken);
+            return authenticationManager.authenticate(authenticationToken);
+        } else throw new RuntimeException("p");
     }
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response,
-                                            FilterChain filterChain, Authentication authentication) throws IOException {
+                                            FilterChain filterChain, Authentication authentication)
+        throws IOException {
         User user = ((User) authentication.getPrincipal());
 
         List<String> roles = user.getAuthorities()
